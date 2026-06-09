@@ -19,24 +19,23 @@ import xml.etree.ElementTree as ET
 # 1) 소스 목록 (업로드 엑셀에서 확정한 채널 ID)
 #    id 가 빈 문자열이면 건너뛴다. 블로그는 type=article, rss 에 직접 주소.
 # ----------------------------------------------------------------------------
-YT = "https://www.youtube.com/feeds/videos.xml?channel_id="
-
+# id = 유튜브 채널ID(UC...). 블로그 등은 id 대신 rss 에 직접 주소.
 SOURCES = [
-    {"category": "economy",   "source": "경제사냥꾼",        "rss": YT + "UC7usMJDHmtbs_oegmzQKKMA", "type": "video"},
-    {"category": "economy",   "source": "부투스쿨",          "rss": YT + "UCCTOzFObhmZoMkJVQKgAQJQ", "type": "video"},
-    {"category": "marketing", "source": "곽팀장",            "rss": YT + "UC-ALJHclOi2SioUH2aVlvAQ", "type": "video"},
-    {"category": "marketing", "source": "WLDO",             "rss": YT + "UCijBTYEiKT1OJO54C6PnRqw", "type": "video"},
-    {"category": "marketing", "source": "무빙워터",          "rss": YT + "UCY0gKpXFzg_Db399xEv0Ojw", "type": "video"},
-    {"category": "marketing", "source": "돌고래유괴단",      "rss": YT + "UCUsLcIQq0poAfOxRyJbxlLA", "type": "video"},
-    {"category": "marketing", "source": "마케팅학교",        "rss": YT + "UCCZEqe3-h1IKKsMLNIZmJ1A", "type": "video"},
-    {"category": "design",    "source": "디고디원찬",        "rss": YT + "UCvcGy6uMg0kwTyEab6hkSlQ", "type": "video"},
-    {"category": "design",    "source": "페이퍼로지",        "rss": YT + "UCowbfOj8HKvTeL6KGIt2waw", "type": "video"},
-    {"category": "design",    "source": "디자인하는AI",      "rss": YT + "UCk_xkR8ORNwtMkaffvYArGA", "type": "video"},
-    {"category": "design",    "source": "실무자",            "rss": YT + "UCtalWvUPhsOFVqxnzM9gedg", "type": "video"},
-    {"category": "design",    "source": "김그륜",            "rss": YT + "UCAQ-_H4rACX-aoMPDPGGxBQ", "type": "video"},
-    {"category": "growth",    "source": "소울정",            "rss": YT + "UCOad7XBQl83FAzunMVN7Ujg", "type": "video"},
-    # 아래는 ID/주소 확보 후 채워넣기 (지금은 건너뜀)
-    {"category": "growth",    "source": "최성운의 사고실험",  "rss": "", "type": "video"},
+    {"category": "economy",   "source": "경제사냥꾼",        "id": "UC7usMJDHmtbs_oegmzQKKMA", "type": "video"},
+    {"category": "economy",   "source": "부투스쿨",          "id": "UCCTOzFObhmZoMkJVQKgAQJQ", "type": "video"},
+    {"category": "marketing", "source": "곽팀장",            "id": "UC-ALJHclOi2SioUH2aVlvAQ", "type": "video"},
+    {"category": "marketing", "source": "WLDO",             "id": "UCijBTYEiKT1OJO54C6PnRqw", "type": "video"},
+    {"category": "marketing", "source": "무빙워터",          "id": "UCY0gKpXFzg_Db399xEv0Ojw", "type": "video"},
+    {"category": "marketing", "source": "돌고래유괴단",      "id": "UCUsLcIQq0poAfOxRyJbxlLA", "type": "video"},
+    {"category": "marketing", "source": "마케팅학교",        "id": "UCCZEqe3-h1IKKsMLNIZmJ1A", "type": "video"},
+    {"category": "design",    "source": "디고디원찬",        "id": "UCvcGy6uMg0kwTyEab6hkSlQ", "type": "video"},
+    {"category": "design",    "source": "페이퍼로지",        "id": "UCowbfOj8HKvTeL6KGIt2waw", "type": "video"},
+    {"category": "design",    "source": "디자인하는AI",      "id": "UCk_xkR8ORNwtMkaffvYArGA", "type": "video"},
+    {"category": "design",    "source": "실무자",            "id": "UCtalWvUPhsOFVqxnzM9gedg", "type": "video"},
+    {"category": "design",    "source": "김그륜",            "id": "UCAQ-_H4rACX-aoMPDPGGxBQ", "type": "video"},
+    {"category": "growth",    "source": "소울정",            "id": "UCOad7XBQl83FAzunMVN7Ujg", "type": "video"},
+    # 아래는 주소 확보 후 채우기 (지금은 건너뜀)
+    {"category": "growth",    "source": "최성운의 사고실험",  "id": "", "type": "video"},
     {"category": "lego",      "source": "원더랜드 블로그",    "rss": "", "type": "article"},  # 예: https://rss.blog.naver.com/블로그아이디.xml
 ]
 
@@ -49,10 +48,46 @@ ATOM = "{http://www.w3.org/2005/Atom}"
 MEDIA = "{http://search.yahoo.com/mrss/}"
 
 
-def fetch(url, timeout=20):
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 daily-brief"})
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
+
+
+def fetch(url, timeout=25):
+    req = urllib.request.Request(url, headers={
+        "User-Agent": UA,
+        "Accept": "application/atom+xml,application/xml,text/xml,*/*",
+        "Accept-Language": "ko,en;q=0.8",
+    })
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read()
+
+
+def youtube_rss_candidates(channel_id):
+    """유튜브가 channel_id 엔드포인트를 막는 경우를 대비해 여러 주소를 순서대로 반환."""
+    uu = "UU" + channel_id[2:] if channel_id.startswith("UC") else channel_id
+    return [
+        f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}",
+        f"https://www.youtube.com/feeds/videos.xml?playlist_id={uu}",
+        # 공개 RSS 프록시(무료, 키 불필요). 위 두 개가 막힐 때만 사용됨.
+        f"https://r.jina.ai/https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}",
+    ]
+
+
+def fetch_any(urls):
+    """후보 주소들을 순서대로 시도해 처음 성공한 응답을 반환."""
+    last = None
+    for u in urls:
+        try:
+            data = fetch(u)
+            if data and (b"<entry" in data or b"<item" in data):
+                return data
+            last = Exception("빈 응답")
+        except Exception as e:
+            last = e
+            continue
+    if last:
+        raise last
+    raise Exception("후보 주소 없음")
 
 
 def parse_dt(s):
@@ -73,11 +108,17 @@ def parse_dt(s):
 
 
 def read_feed(src):
-    """유튜브(Atom) / 블로그(RSS) 모두에서 항목 리스트를 표준 형태로 추출."""
-    if not src["rss"]:
+    """유튜브(id 기반, 여러 주소 시도) / 블로그(rss 직접)에서 항목을 표준 형태로 추출."""
+    cid = src.get("id", "")
+    direct = src.get("rss", "")
+    if cid:
+        urls = youtube_rss_candidates(cid)
+    elif direct:
+        urls = [direct]
+    else:
         return []
     try:
-        raw = fetch(src["rss"])
+        raw = fetch_any(urls)
     except Exception as e:
         print(f"  ! RSS 실패: {src['source']} ({e})")
         return []
@@ -189,7 +230,7 @@ def main():
     seen = set()
 
     for src in SOURCES:
-        if not src["rss"]:
+        if not src.get("id") and not src.get("rss"):
             print(f"- 건너뜀(주소 없음): {src['source']}")
             continue
         print(f"- 수집: {src['source']}")
