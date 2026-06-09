@@ -25,7 +25,7 @@ jobs:
       - name: 수집·요약 실행
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          LOOKBACK_HOURS: "720"
+          LOOKBACK_HOURS: "26"
           CLAUDE_MODEL: "claude-haiku-4-5-20251001"
           OUT_PATH: "docs/feed.json"
         run: python collect.py
